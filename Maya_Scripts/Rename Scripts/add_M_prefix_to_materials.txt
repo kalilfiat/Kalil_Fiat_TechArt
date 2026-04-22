@@ -1,0 +1,25 @@
+Añadir el prefijo M_ a todos los materiales de la escena, usando MEL:
+
+
+
+
+// Rename all user materials with M_ prefix
+
+string $materials[] = `ls -materials`;
+
+for ($mat in $materials){
+
+    // Skip default Maya materials
+    if ($mat == "lambert1") continue;
+    if ($mat == "particleCloud1") continue;
+    if ($mat == "standardSurface1") continue;
+
+    // Skip if already has prefix
+    if (`gmatch $mat "M_*"`) continue;
+
+    string $newName = ("M_" + $mat);
+
+    rename $mat $newName;
+}
+
+print("All materials renamed with M_ prefix.\n");

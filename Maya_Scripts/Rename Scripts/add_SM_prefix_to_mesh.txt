@@ -1,0 +1,27 @@
+Añadir el prefijo SM_ a todos los objetos tipo mesh de la escena, usando MEL:
+
+
+
+// Rename all mesh objects with SM_ prefix
+string $meshes[] = `ls -type "mesh"`;
+
+for ($shape in $meshes) {
+
+    // Get parent transform of mesh shape
+    string $parent[] = `listRelatives -parent $shape`;
+
+    if (size($parent) > 0) {
+
+        string $obj = $parent[0];
+
+        // Check if it already starts with SM_
+        if (!`gmatch $obj "SM_*"`) {
+
+            string $newName = ("SM_" + $obj);
+
+            rename $obj $newName;
+        }
+    }
+}
+
+print("All mesh objects renamed with SM_ prefix.\n");
