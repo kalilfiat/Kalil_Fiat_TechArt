@@ -1,0 +1,470 @@
+// ========================================
+// Maya Naming Toolkit
+// ========================================
+
+global proc int MNT_HasAnyPrefix(string $name)
+{
+    if (`gmatch $name "SM_*"`) return 1;
+    if (`gmatch $name "SK_*"`) return 1;
+    if (`gmatch $name "M_*"`) return 1;
+    if (`gmatch $name "MI_*"`) return 1;
+    if (`gmatch $name "T_*"`) return 1;
+    return 0;
+}
+
+global proc string MNT_RemoveKnownPrefix(string $name)
+{
+    if (`gmatch $name "SM_*"`) return `substring $name 4 (size($name))`;
+    if (`gmatch $name "SK_*"`) return `substring $name 4 (size($name))`;
+    if (`gmatch $name "MI_*"`) return `substring $name 4 (size($name))`;
+    if (`gmatch $name "M_*"`) return `substring $name 3 (size($name))`;
+    if (`gmatch $name "T_*"`) return `substring $name 3 (size($name))`;
+    return $name;
+}
+
+global proc string MNT_SanitizeName(string $name)
+{
+    string $newName = $name;
+
+    $newName = `substituteAllString $newName " " "_"`;
+    $newName = `substituteAllString $newName "-" "_"`;
+    $newName = `substituteAllString $newName "." "_"`;
+
+    $newName = `substituteAllString $newName "ñ" "n"`;
+    $newName = `substituteAllString $newName "Ñ" "N"`;
+
+    $newName = `substituteAllString $newName "á" "a"`;
+    $newName = `substituteAllString $newName "é" "e"`;
+    $newName = `substituteAllString $newName "í" "i"`;
+    $newName = `substituteAllString $newName "ó" "o"`;
+    $newName = `substituteAllString $newName "ú" "u"`;
+
+    $newName = `substituteAllString $newName "Á" "A"`;
+    $newName = `substituteAllString $newName "É" "E"`;
+    $newName = `substituteAllString $newName "Í" "I"`;
+    $newName = `substituteAllString $newName "Ó" "O"`;
+    $newName = `substituteAllString $newName "Ú" "U"`;
+
+    return $newName;
+}
+
+global proc string MNT_BuildName(string $prefix, string $oldName)
+{
+    string $base = MNT_RemoveKnownPrefix($oldName);
+    $base = MNT_SanitizeName($base);
+    return ($prefix + $base);
+}
+
+global proc int MNT_IsDefaultMaterial(string $mat)
+{
+    if ($mat == "lambert1") return 1;
+    if ($mat == "particleCloud1") return 1;
+    if ($mat == "standardSurface1") return 1;
+    if ($mat == "openPBR_shader1") return 1;
+    return 0;
+}
+
+global proc int MNT_IsSkinnedMesh(string $shape)
+{
+    string $history[] = `listHistory $shape`;
+
+    for ($node in $history)
+    {
+        if (`nodeType $node` == "skinCluster")
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+// ========================================
+// PREFIX BUTTONS
+// ========================================
+
+global proc MNT_AddPrefixToMeshes(string $prefix)
+{
+    string $meshes[] = `ls -type "mesh"`;
+
+    for ($shape in $meshes)
+    {
+        if (`getAttr ($shape + ".intermediateObject")`) continue;
+
+        string $parents[] = `listRelatives -parent $shape`;
+
+        if (size($parents) > 0)
+        {
+            string $obj = $parents[0];
+
+            if (!`gmatch $obj ($prefix + "*")`)
+            {
+                rename $obj (MNT_BuildName($prefix, $obj));
+            }
+        }
+    }
+
+    print("Mesh prefix applied.\n");
+}
+
+global proc MNT_AddPrefixToSkinnedMeshes()
+{
+    string $meshes[] = `ls -type "mesh"`;
+
+    for ($shape in $meshes)
+    {
+        if (`getAttr ($shape + ".intermediateObject")`) continue;
+
+        if (MNT_IsSkinnedMesh($shape))
+        {
+            string $parents[] = `listRelatives -parent $shape`;
+
+            if (size($parents) > 0)
+            {
+                string $obj = $parents[0];
+
+                if (!`gmatch $obj "SK_*"`)
+                {
+                    rename $obj (MNT_BuildName("SK_", $obj));
+                }
+            }
+        }
+    }
+
+    print("SK_ prefix applied.\n");
+}
+
+global proc MNT_AddPrefixToMaterials()
+{
+    string $materials[] = `ls -materials`;
+
+    for ($mat in $materials)
+    {
+        if (MNT_IsDefaultMaterial($mat)) continue;
+
+        if (!`gmatch $mat "M_*"` && !`gmatch $mat "MI_*"`)
+        {
+            rename $mat (MNT_BuildName("M_", $mat));
+        }
+    }
+
+    print("Material prefix applied.\n");
+}
+
+global proc MNT_AddPrefixToTextures()
+{
+    string $files[] = `ls -type "file"`;
+
+    for ($f in $files)
+    {
+        if (!`gmatch $f "T_*"`)
+        {
+            rename $f (MNT_BuildName("T_", $f));
+        }
+    }
+
+    print("Texture prefix applied.\n");
+}
+
+
+// ========================================
+// SANITIZE BUTTONS
+// ========================================
+
+global proc MNT_SanitizeSelection()
+{
+    string $selection[] = `ls -sl`;
+
+    for ($obj in $selection)
+    {
+        string $clean = MNT_SanitizeName($obj);
+
+        if ($clean != $obj)
+        {
+            rename $obj $clean;
+        }
+    }
+
+    print("Selection sanitized.\n");
+}
+
+global proc MNT_SanitizeAllTransforms()
+{
+    string $objects[] = `ls -transforms`;
+
+    for ($obj in $objects)
+    {
+        string $clean = MNT_SanitizeName($obj);
+
+        if ($clean != $obj)
+        {
+            rename $obj $clean;
+        }
+    }
+
+    print("All transforms sanitized.\n");
+}
+
+
+// ========================================
+// VALIDATE ONLY
+// ========================================
+
+global proc MNT_ValidateNaming()
+{
+    string $badNames[];
+    int $badCount = 0;
+
+    string $meshes[] = `ls -type "mesh"`;
+
+    for ($shape in $meshes)
+    {
+        if (`getAttr ($shape + ".intermediateObject")`) continue;
+
+        string $parents[] = `listRelatives -parent $shape`;
+
+        if (size($parents) > 0)
+        {
+            string $obj = $parents[0];
+
+            if (MNT_IsSkinnedMesh($shape))
+            {
+                if (!`gmatch $obj "SK_*"`)
+                {
+                    $badNames[$badCount] = ("Skinned Mesh missing SK_ prefix: " + $obj);
+                    $badCount++;
+                }
+            }
+            else
+            {
+                if (!`gmatch $obj "SM_*"`)
+                {
+                    $badNames[$badCount] = ("Static Mesh missing SM_ prefix: " + $obj);
+                    $badCount++;
+                }
+            }
+        }
+    }
+
+    string $materials[] = `ls -materials`;
+
+    for ($mat in $materials)
+    {
+        if (MNT_IsDefaultMaterial($mat)) continue;
+
+        if (!`gmatch $mat "M_*"` && !`gmatch $mat "MI_*"`)
+        {
+            $badNames[$badCount] = ("Material missing M_ or MI_ prefix: " + $mat);
+            $badCount++;
+        }
+    }
+
+    string $files[] = `ls -type "file"`;
+
+    for ($f in $files)
+    {
+        if (!`gmatch $f "T_*"`)
+        {
+            $badNames[$badCount] = ("Texture node missing T_ prefix: " + $f);
+            $badCount++;
+        }
+    }
+
+    if ($badCount == 0)
+    {
+        confirmDialog
+            -title "Naming Validation"
+            -message "All meshes, skinned meshes, materials and texture nodes are correctly named."
+            -button "OK";
+    }
+    else
+    {
+        string $message = "Naming issues found:\n\n";
+
+        for ($i = 0; $i < $badCount; $i++)
+        {
+            $message = ($message + $badNames[$i] + "\n");
+            print($badNames[$i] + "\n");
+        }
+
+        confirmDialog
+            -title "Naming Validation"
+            -message $message
+            -button "OK";
+    }
+}
+
+
+// ========================================
+// VALIDATE AND FIX
+// ========================================
+
+global proc MNT_ValidateAndFix()
+{
+    int $fixedCount = 0;
+    string $report = "Fixed names:\n\n";
+
+    string $meshes[] = `ls -type "mesh"`;
+
+    for ($shape in $meshes)
+    {
+        if (`getAttr ($shape + ".intermediateObject")`) continue;
+
+        string $parents[] = `listRelatives -parent $shape`;
+
+        if (size($parents) > 0)
+        {
+            string $obj = $parents[0];
+            string $newName;
+
+            if (MNT_IsSkinnedMesh($shape))
+            {
+                $newName = MNT_BuildName("SK_", $obj);
+            }
+            else
+            {
+                $newName = MNT_BuildName("SM_", $obj);
+            }
+
+            if ($newName != $obj)
+            {
+                string $renamed = `rename $obj $newName`;
+                $report = ($report + $obj + "  ->  " + $renamed + "\n");
+                $fixedCount++;
+            }
+        }
+    }
+
+    string $materials[] = `ls -materials`;
+
+    for ($mat in $materials)
+    {
+        if (MNT_IsDefaultMaterial($mat)) continue;
+
+        if (!`gmatch $mat "MI_*"`)
+        {
+            string $newMat = MNT_BuildName("M_", $mat);
+
+            if ($newMat != $mat)
+            {
+                string $renamedMat = `rename $mat $newMat`;
+                $report = ($report + $mat + "  ->  " + $renamedMat + "\n");
+                $fixedCount++;
+            }
+        }
+    }
+
+    string $files[] = `ls -type "file"`;
+
+    for ($f in $files)
+    {
+        string $newFile = MNT_BuildName("T_", $f);
+
+        if ($newFile != $f)
+        {
+            string $renamedFile = `rename $f $newFile`;
+            $report = ($report + $f + "  ->  " + $renamedFile + "\n");
+            $fixedCount++;
+        }
+    }
+
+    if ($fixedCount == 0)
+    {
+        confirmDialog
+            -title "Validate and Fix"
+            -message "Everything is already correctly named."
+            -button "OK";
+    }
+    else
+    {
+        confirmDialog
+            -title "Validate and Fix"
+            -message $report
+            -button "OK";
+    }
+
+    print("Validate and Fix complete.\n");
+}
+
+
+// ========================================
+// UI
+// ========================================
+
+global proc MNT_OpenWindow()
+{
+    if (`window -exists MayaNamingToolkit`)
+        deleteUI MayaNamingToolkit;
+
+    window
+        -title "Maya Naming Toolkit"
+        -widthHeight 340 470
+        MayaNamingToolkit;
+
+    columnLayout
+        -adjustableColumn true
+        -rowSpacing 8;
+
+    text
+        -label "Maya Naming Toolkit"
+        -height 30;
+
+    separator -style "in";
+
+    button
+        -label "Add SM_ to Static Meshes"
+        -height 35
+        -command "MNT_AddPrefixToMeshes(\"SM_\")";
+
+    button
+        -label "Add SK_ to Skinned Meshes"
+        -height 35
+        -command "MNT_AddPrefixToSkinnedMeshes";
+
+    button
+        -label "Add M_ to Materials"
+        -height 35
+        -command "MNT_AddPrefixToMaterials";
+
+    button
+        -label "Add T_ to Texture Nodes"
+        -height 35
+        -command "MNT_AddPrefixToTextures";
+
+    separator -style "in";
+
+    button
+        -label "Sanitize Selected Names"
+        -height 35
+        -command "MNT_SanitizeSelection";
+
+    button
+        -label "Sanitize All Transform Names"
+        -height 35
+        -command "MNT_SanitizeAllTransforms";
+
+    separator -style "in";
+
+    button
+        -label "Validate Naming"
+        -height 35
+        -command "MNT_ValidateNaming";
+
+    button
+        -label "Validate and Fix Naming"
+        -height 35
+        -command "MNT_ValidateAndFix";
+
+    separator -style "in";
+
+    text
+        -label "Prefixes: SM_  SK_  M_  MI_  T_";
+
+    text
+        -label "Rules: no spaces, no special chars";
+
+    showWindow MayaNamingToolkit;
+}
+
+MNT_OpenWindow;
