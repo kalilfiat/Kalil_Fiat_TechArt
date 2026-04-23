@@ -1,4 +1,4 @@
-![ImagePreview](./assets/image/MayaNamingToolkitPreview.jpg)
+![ImagePreview](./assets/image/MayaNamingThumbnail.jpg)
 
 # Maya Naming Toolkit v1.0
 
