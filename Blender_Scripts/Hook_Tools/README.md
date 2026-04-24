@@ -1,6 +1,6 @@
 # Curve Hook Tools
 
-![ImagePreview](./assets/image/HookToolThumbnail.png)
+![ImagePreview](./assets/image/HookToolsThumbnail.png)
 
 Blender add-on for creating and managing curve hooks directly from selected curve points.
 
