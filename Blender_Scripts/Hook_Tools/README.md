@@ -209,11 +209,3 @@ is used.
 ```text
 1.1.0
 ```
-
----
-
-## Author
-
-```text
-OpenAI
-```
