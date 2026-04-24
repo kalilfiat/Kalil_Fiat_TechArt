@@ -1,5 +1,6 @@
-```md
 ![ImagePreview](./assets/image/MayaPBRWranglerThumbnail.png)
+
+---
 
 # Maya PBR Wrangler
 
@@ -15,11 +16,11 @@ Maya PBR Wrangler helps speed up look development by reducing repetitive manual 
 
 With a selected mesh, the tool can:
 
-- Create and assign a new Arnold material.
-- Update textures on an existing material.
-- Auto-detect texture types from naming conventions.
-- Connect only the maps provided.
-- Configure utility nodes automatically when needed.
+- Create a new Arnold material
+- Update textures on an existing material
+- Auto-detect texture types from naming conventions
+- Connect only provided maps
+- Configure utility nodes automatically
 
 Designed as a lightweight utility for surfacing workflows and faster asset preparation.
 
@@ -28,28 +29,24 @@ Designed as a lightweight utility for surfacing workflows and faster asset prepa
 ## Features
 
 ### Material Creation
+
 - Creates a new `aiStandardSurface`
 - Assigns the material to selected meshes
 - Builds texture connections automatically
 
 ### Material Update
+
 - Reuses the object's existing material
 - Replaces or adds texture maps non-destructively
 
 ### Automatic PBR Map Detection
 
-Supports Node Wrangler–style texture name parsing:
-
-- Removes file extensions and numeric suffixes
-- Splits CamelCase names
-- Parses separators:
+Supports parsing of:
 
 - `_`
 - `.`
 - `-`
 - `#`
-
-Matches detected tokens against supported map tags.
 
 Supported maps:
 
@@ -67,11 +64,13 @@ Supported maps:
 - Gloss (auto inverted)
 - Subsurface Color
 
-### Automatic Technical Setup
+---
 
-- Color maps set to `sRGB`
-- Data maps set to `Raw`
-- Gloss maps inverted before roughness
+## Technical Setup
+
+- Color maps use `sRGB`
+- Data maps use `Raw`
+- Gloss maps are inverted before roughness
 - Displacement network generated automatically
 - Default displacement scale initialized
 
@@ -83,11 +82,9 @@ Supported maps:
 
 `maya_pbr_wrangler.py`
 
-into your Maya plug-ins folder:
+Into:
 
-```text
-Documents/maya/<version>/plug-ins
-```
+`Documents/maya/<version>/plug-ins`
 
 2. Open:
 
@@ -101,32 +98,25 @@ Documents/maya/<version>/plug-ins
 
 Enable `Auto Load`
 
-The tool UI will launch when loaded.
-
 ---
 
 ## Usage
 
 ### Create New Material
 
-1. Select one or more meshes
-
-2. Launch the tool
-
+1. Select one or more meshes  
+2. Launch the tool  
 3. Click:
 
 `Create Arnold Material and Apply Textures`
 
-4. Choose the texture set
-
-The tool creates a new shader and connects detected maps automatically.
+4. Choose texture set
 
 ---
 
 ### Update Existing Material
 
-1. Select a mesh with an assigned material
-
+1. Select a mesh with material assigned  
 2. Click:
 
 `Apply/Replace Textures on Existing Material`
@@ -139,16 +129,14 @@ Only detected maps are updated.
 
 ## Example Naming Convention
 
-Recommended names:
+Recommended:
 
-```text
-wood_basecolor.png
-wood_roughness.png
-wood_metallic.png
-wood_normal.png
-wood_height.exr
-wood_ao.png
-```
+`wood_basecolor.png`  
+`wood_roughness.png`  
+`wood_metallic.png`  
+`wood_normal.png`  
+`wood_height.exr`  
+`wood_ao.png`
 
 Detection priority:
 
@@ -166,36 +154,29 @@ Detection priority:
 12. Alpha  
 13. Ambient Occlusion
 
-If a name is ambiguous, the first valid match in this order is used.
-
 ---
 
 ## Requirements
 
-- Autodesk Maya
+- Autodesk Maya  
 - Arnold for Maya (`mtoa`)
 
 ---
 
 ## Notes
 
-- Only provided maps are connected
-- Missing maps are ignored safely
-- Existing materials can be updated without rebuilding
+- Only provided maps are connected  
+- Missing maps are ignored safely  
+- Existing materials can be updated without rebuilding  
 - Intended for faster PBR setup, not full lookdev replacement
 
 ---
 
 ## Use Cases
 
-Useful for:
-
-- Asset surfacing
-- Prop texturing workflows
-- Lookdev setup
-- Batch PBR assignment
-- Technical art utilities
+- Asset surfacing  
+- Prop texturing workflows  
+- Lookdev setup  
+- Batch PBR assignment  
+- Technical art utilities  
 - Faster shader prototyping
-
----
-```
