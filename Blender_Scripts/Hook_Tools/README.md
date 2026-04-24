@@ -1,52 +1,219 @@
-Hook Tools is a Blender addon that simplifies the creation and management of hooks on curve splines. It lets you generate empties and hook modifiers quickly, with control over shape, size, and automatic organization.
+# Curve Hook Tools
 
-Features
+![ImagePreview](./assets/image/HookToolThumbnail.png)
 
-Create one hook per selected point
-Or create a single hook for multiple selected points
-Automatically generates empties
-Customizable empty shape and size
-Automatically organizes hooks into a collection:
-Hooks_<ParentCollectionName>
-Safe removal of hooks and related empties
-Automatically removes empty collections when no longer needed
+Blender add-on for creating and managing curve hooks directly from selected curve points.
 
-Installation
+This tool is useful for quickly setting up controllable curve deformation using Blender Hooks and Empty objects, without manually creating each hook one by one.
 
-Open Blender
-Go to Edit > Preferences > Add-ons
-Click Install
-Select the .py file
-Enable "Hook Tools"
+---
 
-Usage
+## Features
 
-Create Hooks
+- Create hooks from selected curve points
+- Supports Bezier and non-Bezier curve points
+- Option to create:
+  - One hook per selected point
+  - One single hook for the whole selection
+- Automatically creates and organizes hook Empty objects
+- Custom Empty display shape
+- Custom Empty display size
+- Removes hook modifiers and associated Empty objects
+- Cleans up the hook collection when empty
 
-Select a curve object
-Enter Edit Mode
-Select one or more points
-Open the sidebar (N) → Hook Tools
-Adjust:
-Empty shape
-Empty size
-Single Hook Mode (optional)
-Click "Create Hooks"
+---
 
-Remove Hooks
+## Installation
 
-Select the curve object
-Open Hook Tools
-Click "Remove Hooks"
+1. Download or copy the `hook_tools.py` file  
+2. Open Blender  
+3. Go to:
 
-This will remove all hook modifiers, delete associated empties, and clean up empty collections if needed.
+`Edit > Preferences > Add-ons`
 
-Notes
+4. Click **Install...**  
+5. Select `hook_tools.py`  
+6. Enable:
 
-Works with Bezier, Poly, and NURBS curves
-If the object belongs to multiple collections, the first one is used as reference
-Designed for clean and fast spline workflows
+`Curve Hook Tools`
 
-Version
+---
 
+## Location
+
+Access the tool from:
+
+`View3D > Sidebar > Hook Tools`
+
+Open the sidebar with:
+
+`N`
+
+---
+
+## How to Use
+
+### Create Hooks
+
+1. Select a curve object  
+2. Enter **Edit Mode**  
+3. Select one or more curve points  
+4. Open the **Hook Tools** panel  
+5. Adjust settings if needed  
+6. Click:
+
+`Create Hooks for Selected Points`
+
+The add-on creates hook modifiers and Empty controllers automatically.
+
+---
+
+## Hook Creation Modes
+
+### One Hook Per Point
+
+With **Single Hook for Selection** disabled:
+
+- One hook is created for every selected point
+
+Example:
+
+```text
+Hook_Curve-01
+Hook_Curve-02
+Hook_Curve-03
+```
+
+Useful for independent control.
+
+---
+
+### Single Hook for Selection
+
+With **Single Hook for Selection** enabled:
+
+- One single hook is created for all selected points.
+
+Useful when multiple points should move together.
+
+---
+
+## Empty Settings
+
+### Shape
+
+Choose Empty display type:
+
+```text
+Plain Axes
+Arrows
+Single Arrow
+Circle
+Cube
+Sphere
+Cone
+Image
+```
+
+---
+
+### Size
+
+Adjust the visual size of generated Empty controllers.
+
+---
+
+## Collection Organization
+
+The add-on automatically creates a child collection:
+
+```text
+Hooks_CollectionName
+```
+
+Example:
+
+```text
+Environment
+└── Hooks_Environment
+```
+
+This keeps hook controls organized.
+
+---
+
+## Remove Hooks
+
+Use:
+
+`Remove Curve Hooks`
+
+This will:
+
+- Remove all Hook modifiers  
+- Delete associated Empty objects  
+- Remove the hook collection if empty
+
+---
+
+## Naming
+
+If the curve object starts with:
+
+```text
+Spline_
+```
+
+Hooks become:
+
+```text
+Hook_
+```
+
+Example:
+
+```text
+Spline_Cable
+→ Hook_Cable
+```
+
+Otherwise:
+
+```text
+Hook_ObjectName
+```
+
+is used.
+
+---
+
+## Requirements
+
+- Blender 3.0+
+- Curve object selected
+- Edit Mode for hook creation
+
+---
+
+## Notes
+
+- Only works with curve objects  
+- Existing non-hook modifiers are untouched  
+- Original point selection is restored after execution  
+- Works with Bezier and standard curve points
+
+---
+
+## Version
+
+```text
 1.1.0
+```
+
+---
+
+## Author
+
+```text
+OpenAI
+```
