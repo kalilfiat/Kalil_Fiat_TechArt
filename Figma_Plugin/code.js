@@ -5,14 +5,18 @@ figma.showUI(__html__, {
 });
 
 const DEFAULTS = {
-  tileWidth: 64,
-  tileHeight: 32,
-  depth: 64,
-  height: 32,
+  tileWidth: 32,
+  tileHeight: 16,
+  depth: 32,
+  height: 16,
   prismWidth: 128,
   widthTiles: 1,
   depthTiles: 1,
   heightTiles: 1,
+  roomWidthTiles: 4,
+  roomDepthTiles: 4,
+  roomHeightTiles: 2,
+  wallThicknessTiles: 0.25,
   columns: 8,
   rows: 8,
   scale: 1,
@@ -25,8 +29,7 @@ const DEFAULTS = {
   strokeColor: "#1f2937",
   useStroke: true,
   createAsGroup: true,
-  useViewportCenter: true,
-  snapToPixel: true,
+  snapToPixel: true
 };
 
 function clampNumber(value, fallback, min) {
@@ -41,6 +44,10 @@ function normalizeSettings(raw) {
   const widthTiles = clampNumber(raw.widthTiles, DEFAULTS.widthTiles, 0);
   const depthTiles = clampNumber(raw.depthTiles, DEFAULTS.depthTiles, 0);
   const heightTiles = clampNumber(raw.heightTiles, DEFAULTS.heightTiles, 0);
+  const roomWidthTiles = clampNumber(raw.roomWidthTiles, DEFAULTS.roomWidthTiles, 0);
+  const roomDepthTiles = clampNumber(raw.roomDepthTiles, DEFAULTS.roomDepthTiles, 0);
+  const roomHeightTiles = clampNumber(raw.roomHeightTiles, DEFAULTS.roomHeightTiles, 0);
+  const wallThicknessTiles = clampNumber(raw.wallThicknessTiles, DEFAULTS.wallThicknessTiles, 0);
 
   return {
     tileWidth: tileWidth,
@@ -48,14 +55,18 @@ function normalizeSettings(raw) {
     widthTiles: widthTiles,
     depthTiles: depthTiles,
     heightTiles: heightTiles,
+    roomWidthTiles: roomWidthTiles,
+    roomDepthTiles: roomDepthTiles,
+    roomHeightTiles: roomHeightTiles,
+    wallThicknessTiles: wallThicknessTiles,
     depth: depthTiles * tileWidth,
     height: heightTiles * tileHeight,
     prismWidth: widthTiles * tileWidth,
     columns: Math.floor(clampNumber(raw.columns, DEFAULTS.columns, 1)),
     rows: Math.floor(clampNumber(raw.rows, DEFAULTS.rows, 1)),
     scale: clampNumber(raw.scale, DEFAULTS.scale, 0.01),
-    originX: raw.useViewportCenter === false ? clampNumber(raw.originX, DEFAULTS.originX, -100000) : figma.viewport.center.x,
-    originY: raw.useViewportCenter === false ? clampNumber(raw.originY, DEFAULTS.originY, -100000) : figma.viewport.center.y,
+    originX: figma.viewport.center.x,
+    originY: figma.viewport.center.y,
     strokeWidth: raw.useStroke === false ? 0 : clampNumber(raw.strokeWidth, DEFAULTS.strokeWidth, 0),
     fillColorTop: raw.fillColorTop || DEFAULTS.fillColorTop,
     fillColorLeft: raw.fillColorLeft || DEFAULTS.fillColorLeft,
@@ -63,7 +74,6 @@ function normalizeSettings(raw) {
     strokeColor: raw.strokeColor || DEFAULTS.strokeColor,
     useStroke: raw.useStroke !== false,
     createAsGroup: raw.createAsGroup !== false,
-    useViewportCenter: raw.useViewportCenter !== false,
     snapToPixel: raw.snapToPixel !== false
   };
 }
@@ -165,6 +175,15 @@ function createIsoDiamondPoints(x, y, w, h, snapToPixel) {
   ];
 }
 
+function createRectPoints(x, y, w, h, snapToPixel) {
+  return [
+    point(x, y, snapToPixel),
+    point(x + w, y, snapToPixel),
+    point(x + w, y + h, snapToPixel),
+    point(x, y + h, snapToPixel)
+  ];
+}
+
 function groupOrSelect(nodes, name, createAsGroup) {
   let selection = nodes;
   if (createAsGroup && nodes.length > 1) {
@@ -205,6 +224,11 @@ function createCube(settings) {
 
 function createBlock(settings, groupName) {
   const cfg = scaled(settings);
+  const faces = createBlockFaces(cfg);
+  return groupOrSelect(faces, groupName, cfg.createAsGroup);
+}
+
+function createBlockFaces(cfg) {
   const x = cfg.originX;
   const y = cfg.originY;
   const widthVector = { x: cfg.prismWidth / 2, y: cfg.widthTiles * cfg.tileHeight / 2 };
@@ -222,7 +246,79 @@ function createBlock(settings, groupName) {
   const leftFace = createPolygon("Left", [left, front, frontDown, leftDown], cfg.fillColorLeft, cfg.strokeColor, cfg.strokeWidth);
   const rightFace = createPolygon("Right", [front, right, rightDown, frontDown], cfg.fillColorRight, cfg.strokeColor, cfg.strokeWidth);
 
-  return groupOrSelect([leftFace, rightFace, topFace], groupName, cfg.createAsGroup);
+  return [leftFace, rightFace, topFace];
+}
+
+function createWallGroup(name, cfg) {
+  const faces = createBlockFaces(cfg);
+  faces.forEach(function (node) {
+    node.name = name + "_" + node.name;
+  });
+  const group = figma.group(faces, figma.currentPage);
+  group.name = name;
+  return group;
+}
+
+function roomVector(cfg, widthTiles, depthTiles) {
+  return {
+    x: (widthTiles * cfg.tileWidth - depthTiles * cfg.tileWidth) / 2,
+    y: (widthTiles * cfg.tileHeight + depthTiles * cfg.tileHeight) / 2
+  };
+}
+
+function blockCfgFromUnits(settings, x, y, widthTiles, depthTiles, heightTiles) {
+  const cfg = scaled(settings);
+  cfg.originX = x;
+  cfg.originY = y;
+  cfg.widthTiles = widthTiles;
+  cfg.depthTiles = depthTiles;
+  cfg.heightTiles = heightTiles;
+  cfg.prismWidth = widthTiles * settings.tileWidth * settings.scale;
+  cfg.depth = depthTiles * settings.tileWidth * settings.scale;
+  cfg.height = heightTiles * settings.tileHeight * settings.scale;
+  return cfg;
+}
+
+function createRoom(settings) {
+  const cfg = scaled(settings);
+  const x = cfg.originX;
+  const y = cfg.originY;
+  const roomWidth = settings.roomWidthTiles;
+  const roomDepth = settings.roomDepthTiles;
+  const roomHeight = settings.roomHeightTiles;
+  const thickness = settings.wallThicknessTiles;
+  const walls = [];
+  const frontOffset = roomVector(cfg, 0, Math.max(roomDepth - thickness, 0));
+  const rightOffset = roomVector(cfg, Math.max(roomWidth - thickness, 0), 0);
+
+  const backWall = blockCfgFromUnits(settings, x, y, roomWidth, thickness, roomHeight);
+  const frontWall = blockCfgFromUnits(settings, x + frontOffset.x, y + frontOffset.y, roomWidth, thickness, roomHeight);
+  const leftWall = blockCfgFromUnits(settings, x, y, thickness, roomDepth, roomHeight);
+  const rightWall = blockCfgFromUnits(settings, x + rightOffset.x, y + rightOffset.y, thickness, roomDepth, roomHeight);
+
+  walls.push(createWallGroup("Room_Back_Wall", backWall));
+  walls.push(createWallGroup("Room_Left_Wall", leftWall));
+  walls.push(createWallGroup("Room_Right_Wall", rightWall));
+  walls.push(createWallGroup("Room_Front_Wall", frontWall));
+
+  return groupOrSelect(walls, "ISO_Room_" + roomWidth + "x" + roomDepth + "x" + roomHeight, true);
+}
+
+function createFlatWall(settings, orientation) {
+  const cfg = scaled(settings);
+  const width = Math.max(cfg.prismWidth, 1);
+  const height = Math.max(cfg.height, 1);
+  const fillColor = orientation === "horizontal" ? cfg.fillColorLeft : cfg.fillColorRight;
+  const suffix = orientation === "horizontal" ? "H" : "V";
+  const points = createRectPoints(cfg.originX, cfg.originY, width, height, cfg.snapToPixel);
+  const wall = createPolygon(
+    "Wall_" + suffix,
+    points,
+    fillColor,
+    cfg.strokeColor,
+    cfg.strokeWidth
+  );
+  return groupOrSelect([wall], "ISO_Flat_Wall_" + suffix + "_" + settings.widthTiles + "x" + settings.heightTiles, cfg.createAsGroup);
 }
 
 function createPlane(settings) {
@@ -247,16 +343,6 @@ function createPlane(settings) {
   return groupOrSelect(nodes, "ISO_Plane_" + settings.columns + "x" + settings.rows, cfg.createAsGroup);
 }
 
-function clearIsoSelection() {
-  const selected = figma.currentPage.selection;
-  selected.forEach(function (node) {
-    if (node.name.startsWith("ISO_")) {
-      node.remove();
-    }
-  });
-  figma.currentPage.selection = [];
-}
-
 figma.ui.postMessage({ type: "defaults", settings: DEFAULTS });
 
 figma.ui.onmessage = function (message) {
@@ -273,8 +359,10 @@ figma.ui.onmessage = function (message) {
 
     if (message.type === "create-tile") createTile(settings);
     if (message.type === "create-cube") createCube(settings);
+    if (message.type === "create-wall-horizontal") createFlatWall(settings, "horizontal");
+    if (message.type === "create-wall-vertical") createFlatWall(settings, "vertical");
     if (message.type === "create-plane") createPlane(settings);
-    if (message.type === "clear-preview") clearIsoSelection();
+    if (message.type === "create-room") createRoom(settings);
 
     figma.ui.postMessage({ type: "status", message: "Created" });
   } catch (error) {

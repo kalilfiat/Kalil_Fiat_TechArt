@@ -64,6 +64,12 @@
       gap: 8px;
     }
 
+    .room-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     label {
       display: grid;
       gap: 5px;
@@ -84,6 +90,11 @@
 
     input[type="color"] {
       padding: 3px;
+    }
+
+    input[type="range"] {
+      height: 24px;
+      padding: 0;
     }
 
     details {
@@ -166,6 +177,12 @@
       gap: 8px;
     }
 
+    .two-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     button {
       min-height: 32px;
       border: 1px solid var(--figma-color-border);
@@ -223,10 +240,11 @@
     <section>
       <h2>Base</h2>
       <div class="grid">
-        <label>Tile width <input id="tileWidth" type="number" min="1" step="1" value="64"></label>
-        <label>Tile height <input id="tileHeight" type="number" min="1" step="1" value="32"></label>
+        <label>Tile width <input id="tileWidth" type="number" min="1" step="1" value="32"></label>
+        <label>Tile height <input id="tileHeight" type="number" min="1" step="1" value="16"></label>
         <label>Scale <input id="scale" type="number" min="0.01" step="0.1" value="1"></label>
       </div>
+      <label class="check"><input id="lockTileRatio" type="checkbox" checked> Lock 2:1 tile ratio</label>
       <div class="action-row">
         <button class="primary" data-action="create-tile">Create Tile</button>
       </div>
@@ -257,13 +275,43 @@
           </span>
         </label>
       </div>
-      <div id="sizeFeedback" class="feedback">= 64px x 64px x 32px</div>
+      <div id="sizeFeedback" class="feedback">= 32px x 32px x 16px</div>
+      <div class="room-grid">
+        <label>Fill cells
+          <span class="stepper">
+            <button type="button" data-step-target="fillCells" data-step="-1">-</button>
+            <input id="fillCells" type="number" min="0" step="1" value="6">
+            <button type="button" data-step-target="fillCells" data-step="1">+</button>
+          </span>
+        </label>
+        <label>Thickness
+          <span class="stepper">
+            <button type="button" data-step-target="blockThicknessTiles" data-step="-0.25">-</button>
+            <input id="blockThicknessTiles" type="number" min="0" step="0.25" value="0.25">
+            <button type="button" data-step-target="blockThicknessTiles" data-step="0.25">+</button>
+          </span>
+        </label>
+      </div>
+      <input id="fillCellsRange" type="range" min="0" max="32" step="1" value="6">
+      <div id="fillFeedback" class="feedback">Fill = 6 cells = 192px</div>
+      <div class="two-actions">
+        <button type="button" data-apply-fill="widthTiles">Apply to Width</button>
+        <button type="button" data-apply-fill="depthTiles">Apply to Depth</button>
+      </div>
       <div class="presets">
         <button type="button" data-preset="1,1,1">Cube</button>
         <button type="button" data-preset="1,0.25,2">Wall X</button>
         <button type="button" data-preset="0.25,1,2">Wall Y</button>
         <button type="button" data-preset="1,1,4">Column</button>
         <button type="button" data-preset="2,2,0.5">Slab</button>
+      </div>
+      <div class="two-actions">
+        <button data-wall-action="x" data-create="create-cube">Create Iso Wall X</button>
+        <button data-wall-action="y" data-create="create-cube">Create Iso Wall Y</button>
+      </div>
+      <div class="two-actions">
+        <button data-wall-action="x" data-create="create-wall-horizontal">Create Flat Wall H</button>
+        <button data-wall-action="y" data-create="create-wall-vertical">Create Flat Wall V</button>
       </div>
       <div class="action-row">
         <button class="primary" data-action="create-cube">Create Block</button>
@@ -282,6 +330,43 @@
     </section>
 
     <section>
+      <h2>Room</h2>
+      <div class="room-grid">
+        <label>Width
+          <span class="stepper">
+            <button type="button" data-step-target="roomWidthTiles" data-step="-1">-</button>
+            <input id="roomWidthTiles" type="number" min="0" step="1" value="4">
+            <button type="button" data-step-target="roomWidthTiles" data-step="1">+</button>
+          </span>
+        </label>
+        <label>Depth
+          <span class="stepper">
+            <button type="button" data-step-target="roomDepthTiles" data-step="-1">-</button>
+            <input id="roomDepthTiles" type="number" min="0" step="1" value="4">
+            <button type="button" data-step-target="roomDepthTiles" data-step="1">+</button>
+          </span>
+        </label>
+        <label>Height
+          <span class="stepper">
+            <button type="button" data-step-target="roomHeightTiles" data-step="-0.25">-</button>
+            <input id="roomHeightTiles" type="number" min="0" step="0.25" value="2">
+            <button type="button" data-step-target="roomHeightTiles" data-step="0.25">+</button>
+          </span>
+        </label>
+        <label>Thickness
+          <span class="stepper">
+            <button type="button" data-step-target="wallThicknessTiles" data-step="-0.25">-</button>
+            <input id="wallThicknessTiles" type="number" min="0" step="0.25" value="0.25">
+            <button type="button" data-step-target="wallThicknessTiles" data-step="0.25">+</button>
+          </span>
+        </label>
+      </div>
+      <div class="action-row">
+        <button class="primary" data-action="create-room">Create Room</button>
+      </div>
+    </section>
+
+    <section>
       <h2>Style</h2>
       <div class="grid">
         <label>Top <input id="fillColorTop" type="color" value="#8fd3ff"></label>
@@ -295,25 +380,7 @@
       <label class="check"><input id="snapToPixel" type="checkbox" checked> Snap to pixel</label>
     </section>
 
-    <section>
-      <h2>Placement</h2>
-      <label class="check"><input id="useViewportCenter" type="checkbox" checked> Create in current view</label>
-      <details>
-        <summary>Manual position</summary>
-        <div class="grid">
-          <label>X <input id="originX" type="number" step="1" value="0"></label>
-          <label>Y <input id="originY" type="number" step="1" value="0"></label>
-        </div>
-      </details>
-    </section>
-
-    <section>
-      <h2>Cleanup</h2>
-      <div class="action-row">
-        <button class="danger" data-action="clear-preview">Clear Preview</button>
-      </div>
-      <div id="status" class="status"></div>
-    </section>
+    <div id="status" class="status"></div>
   </main>
   <div id="resizeHandle" class="resize-handle" title="Resize"></div>
 
@@ -324,9 +391,11 @@
       "widthTiles",
       "depthTiles",
       "heightTiles",
+      "roomWidthTiles",
+      "roomDepthTiles",
+      "roomHeightTiles",
+      "wallThicknessTiles",
       "scale",
-      "originX",
-      "originY",
       "columns",
       "rows",
       "strokeWidth",
@@ -336,7 +405,6 @@
       "strokeColor",
       "useStroke",
       "createAsGroup",
-      "useViewportCenter",
       "snapToPixel"
     ];
 
@@ -356,6 +424,18 @@
       input.value = Number.isFinite(value) && value >= 0 ? value : 0;
     }
 
+    function syncTileRatio(changedId) {
+      if (!document.getElementById("lockTileRatio").checked) return;
+      const tileWidth = document.getElementById("tileWidth");
+      const tileHeight = document.getElementById("tileHeight");
+      if (changedId === "tileWidth") {
+        tileHeight.value = formatNumber(Math.max((Number(tileWidth.value) || 1) / 2, 1));
+      }
+      if (changedId === "tileHeight") {
+        tileWidth.value = formatNumber(Math.max((Number(tileHeight.value) || 1) * 2, 1));
+      }
+    }
+
     function updateSizeFeedback() {
       const tileWidth = Math.max(Number(document.getElementById("tileWidth").value) || 0, 0);
       const tileHeight = Math.max(Number(document.getElementById("tileHeight").value) || 0, 0);
@@ -367,6 +447,29 @@
       const realHeight = heightTiles * tileHeight;
       document.getElementById("sizeFeedback").textContent =
         "= " + formatNumber(realWidth) + "px x " + formatNumber(realDepth) + "px x " + formatNumber(realHeight) + "px";
+    }
+
+    function updateFillFeedback() {
+      const tileWidth = Math.max(Number(document.getElementById("tileWidth").value) || 0, 0);
+      const fillCells = Math.max(Number(document.getElementById("fillCells").value) || 0, 0);
+      document.getElementById("fillCellsRange").value = Math.min(fillCells, Number(document.getElementById("fillCellsRange").max));
+      document.getElementById("fillFeedback").textContent =
+        "Fill = " + formatNumber(fillCells) + " cells = " + formatNumber(fillCells * tileWidth) + "px";
+    }
+
+    function setWallUnits(direction) {
+      const fillCells = Math.max(Number(document.getElementById("fillCells").value) || 0, 0);
+      const thickness = Math.max(Number(document.getElementById("blockThicknessTiles").value) || 0, 0);
+      if (direction === "x") {
+        document.getElementById("widthTiles").value = formatNumber(fillCells);
+        document.getElementById("depthTiles").value = formatNumber(thickness);
+      }
+      if (direction === "y") {
+        document.getElementById("widthTiles").value = formatNumber(thickness);
+        document.getElementById("depthTiles").value = formatNumber(fillCells);
+      }
+      updateSizeFeedback();
+      updateFillFeedback();
     }
 
     function updateStrokeControls() {
@@ -383,7 +486,7 @@
     }
 
     function send(type) {
-      ["widthTiles", "depthTiles", "heightTiles"].forEach((id) => {
+      ["widthTiles", "depthTiles", "heightTiles", "roomWidthTiles", "roomDepthTiles", "roomHeightTiles", "wallThicknessTiles"].forEach((id) => {
         clampUnitInput(document.getElementById(id));
       });
       updateSizeFeedback();
@@ -415,6 +518,7 @@
         const nextValue = Math.max((Number(input.value) || 0) + Number(button.dataset.step), 0);
         input.value = formatNumber(nextValue);
         updateSizeFeedback();
+        updateFillFeedback();
       });
     });
 
@@ -428,11 +532,53 @@
       });
     });
 
-    ["tileWidth", "tileHeight", "widthTiles", "depthTiles", "heightTiles"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", () => {
-        if (id.endsWith("Tiles")) clampUnitInput(document.getElementById(id));
+    document.querySelectorAll("button[data-preset-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const values = button.dataset.presetAction.split(",").map(Number);
+        document.getElementById("widthTiles").value = values[0];
+        document.getElementById("depthTiles").value = values[1];
+        document.getElementById("heightTiles").value = values[2];
         updateSizeFeedback();
+        send(button.dataset.create || "create-cube");
       });
+    });
+
+    document.querySelectorAll("button[data-apply-fill]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const fillCells = Math.max(Number(document.getElementById("fillCells").value) || 0, 0);
+        document.getElementById(button.dataset.applyFill).value = formatNumber(fillCells);
+        updateSizeFeedback();
+        updateFillFeedback();
+      });
+    });
+
+    document.querySelectorAll("button[data-wall-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setWallUnits(button.dataset.wallAction);
+        send(button.dataset.create || "create-cube");
+      });
+    });
+
+    ["tileWidth", "tileHeight", "widthTiles", "depthTiles", "heightTiles", "fillCells", "blockThicknessTiles", "roomWidthTiles", "roomDepthTiles", "roomHeightTiles", "wallThicknessTiles"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        if (id === "tileWidth" || id === "tileHeight") syncTileRatio(id);
+        if (id.endsWith("Tiles")) clampUnitInput(document.getElementById(id));
+        if (id === "fillCells" || id === "blockThicknessTiles") clampUnitInput(document.getElementById(id));
+        updateSizeFeedback();
+        updateFillFeedback();
+      });
+    });
+
+    document.getElementById("fillCellsRange").addEventListener("input", () => {
+      document.getElementById("fillCells").value = document.getElementById("fillCellsRange").value;
+      updateSizeFeedback();
+      updateFillFeedback();
+    });
+
+    document.getElementById("lockTileRatio").addEventListener("change", () => {
+      syncTileRatio("tileWidth");
+      updateSizeFeedback();
+      updateFillFeedback();
     });
 
     document.getElementById("useStroke").addEventListener("change", updateStrokeControls);
@@ -462,6 +608,7 @@
     });
 
     updateSizeFeedback();
+    updateFillFeedback();
     updateStrokeControls();
 
     window.onmessage = (event) => {

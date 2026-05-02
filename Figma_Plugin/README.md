@@ -20,6 +20,7 @@ The system is based on **tile units**, making it intuitive to construct cubes, w
 
 - Tile-based 2:1 isometric system
 - Fast creation of blocks and planes
+- Room creation from four grouped isometric walls
 - Pixel-consistent geometry (no arbitrary transforms)
 - Faces generated as editable vectors (`Top`, `Left`, `Right`)
 - Preset-driven workflow for common structures
@@ -59,6 +60,19 @@ This allows you to build structures without thinking about pixel math.
 - Column  
 - Slab  
 
+There are also direct wall actions:
+- Create Iso Wall X  
+- Create Iso Wall Y  
+- Create Flat Wall H  
+- Create Flat Wall V  
+
+The flat wall actions create absolute screen-aligned rectangular walls, useful when a wall should not follow the isometric grid direction.
+
+Base tile controls include a locked 2:1 ratio by default, so `tileHeight` follows `tileWidth / 2`.
+The default base tile is `32 x 16`.
+
+The block section also includes `Fill cells`: set how many base cells a piece should cover, then apply it to width or depth, or create wall pieces directly from that length.
+
 These presets speed up common use cases like:
 - walls  
 - vertical structures  
@@ -74,11 +88,18 @@ The plugin generates:
 - ISO_Tile_WIDTHxHEIGHT  
 - ISO_Block_WIDTHxDEPTHxHEIGHT  
 - ISO_Plane_COLUMNSxROWS  
+- ISO_Room_WIDTHxDEPTHxHEIGHT  
 
 Each block includes:
 - Top face  
 - Left face  
 - Right face  
+
+Rooms are grouped as `ISO_Room_*` and contain four movable wall groups:
+- `Room_Back_Wall`
+- `Room_Left_Wall`
+- `Room_Right_Wall`
+- `Room_Front_Wall`
 
 All faces are **separate editable vectors** grouped logically.
 
@@ -108,11 +129,12 @@ All faces are **separate editable vectors** grouped logically.
 - Create isometric tiles (2:1)  
 - Create blocks using tile units  
 - Create planes (grid-based surfaces)  
+- Create rooms using width, depth, wall height, and wall thickness  
 - Preset-based structure creation  
 - Style controls (top / left / right / stroke)  
 - Snap to pixel support  
 - Create as group toggle  
-- Placement in current view or manual position  
+- Placement in current view  
 
 ---
 
