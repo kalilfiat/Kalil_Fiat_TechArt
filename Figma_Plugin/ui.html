@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iso Shape Builder</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--figma-color-text);
+      background: var(--figma-color-bg);
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 100vh;
+      padding: 14px 14px 24px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    h2 {
+      color: var(--figma-color-text-secondary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    section {
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .unit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--figma-color-text-secondary);
+      font-size: 11px;
+    }
+
+    input {
+      width: 100%;
+      height: 30px;
+      border: 1px solid var(--figma-color-border);
+      border-radius: 6px;
+      padding: 0 8px;
+      color: var(--figma-color-text);
+      background: var(--figma-color-bg-secondary);
+      font: inherit;
+    }
+
+    input[type="color"] {
+      padding: 3px;
+    }
+
+    details {
+      border: 1px solid var(--figma-color-border);
+      border-radius: 6px;
+      padding: 8px;
+    }
+
+    summary {
+      color: var(--figma-color-text-secondary);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    details .grid {
+      margin-top: 8px;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: 28px 1fr 28px;
+      gap: 4px;
+    }
+
+    .stepper button {
+      min-height: 30px;
+      padding: 0;
+      font-size: 14px;
+    }
+
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .presets button {
+      min-height: 28px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .feedback {
+      border: 1px solid var(--figma-color-border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--figma-color-text);
+      background: var(--figma-color-bg-secondary);
+      font-weight: 700;
+    }
+
+    .hint {
+      color: var(--figma-color-text-secondary);
+      font-weight: 500;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      color: var(--figma-color-text);
+    }
+
+    .check input {
+      width: 14px;
+      height: 14px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    button {
+      min-height: 32px;
+      border: 1px solid var(--figma-color-border);
+      border-radius: 6px;
+      padding: 0 10px;
+      color: var(--figma-color-text);
+      background: var(--figma-color-bg-secondary);
+      font: inherit;
+      font-weight: 600;
+    }
+
+    button.primary {
+      border-color: var(--figma-color-bg-brand);
+      color: var(--figma-color-text-onbrand);
+      background: var(--figma-color-bg-brand);
+    }
+
+    button.danger {
+      color: var(--figma-color-text-danger);
+    }
+
+    .status {
+      min-height: 18px;
+      color: var(--figma-color-text-secondary);
+    }
+
+    .resize-handle {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      width: 18px;
+      height: 18px;
+      cursor: nwse-resize;
+    }
+
+    .resize-handle::before {
+      content: "";
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid var(--figma-color-icon-secondary);
+      border-bottom: 2px solid var(--figma-color-icon-secondary);
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Iso Shape Builder</h1>
+    </header>
+
+    <section>
+      <h2>Base</h2>
+      <div class="grid">
+        <label>Tile width <input id="tileWidth" type="number" min="1" step="1" value="64"></label>
+        <label>Tile height <input id="tileHeight" type="number" min="1" step="1" value="32"></label>
+        <label>Scale <input id="scale" type="number" min="0.01" step="0.1" value="1"></label>
+      </div>
+      <div class="action-row">
+        <button class="primary" data-action="create-tile">Create Tile</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Block units</h2>
+      <div class="unit-grid">
+        <label>Width
+          <span class="stepper">
+            <button type="button" data-step-target="widthTiles" data-step="-0.25">-</button>
+            <input id="widthTiles" type="number" min="0" step="0.25" value="1">
+            <button type="button" data-step-target="widthTiles" data-step="0.25">+</button>
+          </span>
+        </label>
+        <label>Depth
+          <span class="stepper">
+            <button type="button" data-step-target="depthTiles" data-step="-0.25">-</button>
+            <input id="depthTiles" type="number" min="0" step="0.25" value="1">
+            <button type="button" data-step-target="depthTiles" data-step="0.25">+</button>
+          </span>
+        </label>
+        <label>Height
+          <span class="stepper">
+            <button type="button" data-step-target="heightTiles" data-step="-0.25">-</button>
+            <input id="heightTiles" type="number" min="0" step="0.25" value="1">
+            <button type="button" data-step-target="heightTiles" data-step="0.25">+</button>
+          </span>
+        </label>
+      </div>
+      <div id="sizeFeedback" class="feedback">= 64px x 64px x 32px</div>
+      <div class="presets">
+        <button type="button" data-preset="1,1,1">Cube</button>
+        <button type="button" data-preset="1,0.25,2">Wall X</button>
+        <button type="button" data-preset="0.25,1,2">Wall Y</button>
+        <button type="button" data-preset="1,1,4">Column</button>
+        <button type="button" data-preset="2,2,0.5">Slab</button>
+      </div>
+      <div class="action-row">
+        <button class="primary" data-action="create-cube">Create Block</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Plane</h2>
+      <div class="grid">
+        <label>Columns <input id="columns" type="number" min="1" step="1" value="8"></label>
+        <label>Rows <input id="rows" type="number" min="1" step="1" value="8"></label>
+      </div>
+      <div class="action-row">
+        <button class="primary" data-action="create-plane">Create Plane</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Style</h2>
+      <div class="grid">
+        <label>Top <input id="fillColorTop" type="color" value="#8fd3ff"></label>
+        <label>Left <input id="fillColorLeft" type="color" value="#5599d6"></label>
+        <label>Right <input id="fillColorRight" type="color" value="#2f6ea8"></label>
+        <label>Stroke <input id="strokeColor" type="color" value="#1f2937"></label>
+        <label>Stroke width <input id="strokeWidth" type="number" min="0" step="0.5" value="1"></label>
+      </div>
+      <label class="check"><input id="createAsGroup" type="checkbox" checked> Create as group</label>
+      <label class="check"><input id="useStroke" type="checkbox" checked> Stroke</label>
+      <label class="check"><input id="snapToPixel" type="checkbox" checked> Snap to pixel</label>
+    </section>
+
+    <section>
+      <h2>Placement</h2>
+      <label class="check"><input id="useViewportCenter" type="checkbox" checked> Create in current view</label>
+      <details>
+        <summary>Manual position</summary>
+        <div class="grid">
+          <label>X <input id="originX" type="number" step="1" value="0"></label>
+          <label>Y <input id="originY" type="number" step="1" value="0"></label>
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Cleanup</h2>
+      <div class="action-row">
+        <button class="danger" data-action="clear-preview">Clear Preview</button>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+  </main>
+  <div id="resizeHandle" class="resize-handle" title="Resize"></div>
+
+  <script>
+    const fields = [
+      "tileWidth",
+      "tileHeight",
+      "widthTiles",
+      "depthTiles",
+      "heightTiles",
+      "scale",
+      "originX",
+      "originY",
+      "columns",
+      "rows",
+      "strokeWidth",
+      "fillColorTop",
+      "fillColorLeft",
+      "fillColorRight",
+      "strokeColor",
+      "useStroke",
+      "createAsGroup",
+      "useViewportCenter",
+      "snapToPixel"
+    ];
+
+    function valueFor(id) {
+      const input = document.getElementById(id);
+      if (input.type === "checkbox") return input.checked;
+      if (input.type === "color") return input.value;
+      return Number(input.value);
+    }
+
+    function formatNumber(value) {
+      return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
+    }
+
+    function clampUnitInput(input) {
+      const value = Number(input.value);
+      input.value = Number.isFinite(value) && value >= 0 ? value : 0;
+    }
+
+    function updateSizeFeedback() {
+      const tileWidth = Math.max(Number(document.getElementById("tileWidth").value) || 0, 0);
+      const tileHeight = Math.max(Number(document.getElementById("tileHeight").value) || 0, 0);
+      const widthTiles = Math.max(Number(document.getElementById("widthTiles").value) || 0, 0);
+      const depthTiles = Math.max(Number(document.getElementById("depthTiles").value) || 0, 0);
+      const heightTiles = Math.max(Number(document.getElementById("heightTiles").value) || 0, 0);
+      const realWidth = widthTiles * tileWidth;
+      const realDepth = depthTiles * tileWidth;
+      const realHeight = heightTiles * tileHeight;
+      document.getElementById("sizeFeedback").textContent =
+        "= " + formatNumber(realWidth) + "px x " + formatNumber(realDepth) + "px x " + formatNumber(realHeight) + "px";
+    }
+
+    function updateStrokeControls() {
+      const enabled = document.getElementById("useStroke").checked;
+      document.getElementById("strokeColor").disabled = !enabled;
+      document.getElementById("strokeWidth").disabled = !enabled;
+    }
+
+    function readSettings() {
+      return fields.reduce((settings, id) => {
+        settings[id] = valueFor(id);
+        return settings;
+      }, {});
+    }
+
+    function send(type) {
+      ["widthTiles", "depthTiles", "heightTiles"].forEach((id) => {
+        clampUnitInput(document.getElementById(id));
+      });
+      updateSizeFeedback();
+      parent.postMessage({
+        pluginMessage: {
+          type,
+          settings: readSettings()
+        }
+      }, "*");
+    }
+
+    function sendResize(width, height) {
+      parent.postMessage({
+        pluginMessage: {
+          type: "resize-ui",
+          width,
+          height
+        }
+      }, "*");
+    }
+
+    document.querySelectorAll("button[data-action]").forEach((button) => {
+      button.addEventListener("click", () => send(button.dataset.action));
+    });
+
+    document.querySelectorAll("button[data-step-target]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.stepTarget);
+        const nextValue = Math.max((Number(input.value) || 0) + Number(button.dataset.step), 0);
+        input.value = formatNumber(nextValue);
+        updateSizeFeedback();
+      });
+    });
+
+    document.querySelectorAll("button[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const values = button.dataset.preset.split(",").map(Number);
+        document.getElementById("widthTiles").value = values[0];
+        document.getElementById("depthTiles").value = values[1];
+        document.getElementById("heightTiles").value = values[2];
+        updateSizeFeedback();
+      });
+    });
+
+    ["tileWidth", "tileHeight", "widthTiles", "depthTiles", "heightTiles"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        if (id.endsWith("Tiles")) clampUnitInput(document.getElementById(id));
+        updateSizeFeedback();
+      });
+    });
+
+    document.getElementById("useStroke").addEventListener("change", updateStrokeControls);
+
+    const resizeHandle = document.getElementById("resizeHandle");
+    let resizeStart = null;
+
+    resizeHandle.addEventListener("mousedown", (event) => {
+      resizeStart = {
+        mouseX: event.clientX,
+        mouseY: event.clientY,
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      event.preventDefault();
+    });
+
+    window.addEventListener("mousemove", (event) => {
+      if (!resizeStart) return;
+      const nextWidth = Math.max(resizeStart.width + event.clientX - resizeStart.mouseX, 320);
+      const nextHeight = Math.max(resizeStart.height + event.clientY - resizeStart.mouseY, 420);
+      sendResize(nextWidth, nextHeight);
+    });
+
+    window.addEventListener("mouseup", () => {
+      resizeStart = null;
+    });
+
+    updateSizeFeedback();
+    updateStrokeControls();
+
+    window.onmessage = (event) => {
+      const message = event.data.pluginMessage;
+      if (!message) return;
+      if (message.type === "status") {
+        document.getElementById("status").textContent = message.message;
+      }
+    };
+  </script>
+</body>
+</html>
